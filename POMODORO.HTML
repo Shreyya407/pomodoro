@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --text-color: #2c3e50;
+            --bg-color: #f7f9fc;
+            --card-bg: #ffffff;
+            --shadow-color: rgba(44, 62, 80, 0.15);
+            --accent-color: #ffe66d;
+        }
+
+        .dark-mode {
+            --primary-color: #ff8787;
+            --secondary-color: #66d9d1;
+            --text-color: #ecf0f1;
+            --bg-color: #1a2526;
+            --card-bg: #263535;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --accent-color: #ffd54f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--bg-color) 0%, var(--secondary-color) 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 550px;
+            padding: 2.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 25px;
+            box-shadow: 0 15px 40px var(--shadow-color);
+            text-align: center;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .dark-mode .container {
+            background: rgba(38, 53, 53, 0.95);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            font-size: 2.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .timer-modes {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .timer-mode {
+            padding: 0.7rem 1.5rem;
+            border-radius: 30px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 2px solid var(--primary-color);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .timer-mode:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .timer-mode.active {
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .timer-mode input {
+            width: 50px;
+            padding: 0.3rem;
+            border-radius: 5px;
+            border: 1px solid var(--secondary-color);
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            display: none;
+        }
+
+        .timer-mode.active input {
+            display: inline-block;
+            border-color: white;
+        }
+
+        .timer-display {
+            font-size: 6rem;
+            font-weight: 700;
+            margin: 1.5rem 0;
+            color: var(--text-color);
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-container {
+            width: 80%;
+            height: 15px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            margin: 2rem auto;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            transition: width 0.5s ease-in-out;
+            box-shadow: 0 0 15px var(--primary-color);
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        button {
+            padding: 0.9rem 2rem;
+            border: none;
+            border-radius: 50px;
+            background: var(--primary-color);
+            color: rgb(42, 2, 2);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        button:hover::after {
+            width: 200%;
+            height: 200%;
+        }
+
+        button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(2px);
+        }
+
+        button.reset {
+            background: #e74c3c;
+        }
+
+        button.mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary-color);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .session-counter {
+            margin: 1.5rem 0;
+            font-size: 1.2rem;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .background-orbits {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .orbit {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px dashed var(--secondary-color);
+            opacity: 0.2;
+            animation: orbit 20s infinite linear;
+        }
+
+        .orbit:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 10%;
+            animation-duration: 25s;
+        }
+
+        .orbit:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            top: 50%;
+            right: 10%;
+            animation-duration: 30s;
+            animation-direction: reverse;
+        }
+
+        .orbit:nth-child(3) {
+            width: 350px;
+            height: 350px;
+            bottom: 10%;
+            left: 40%;
+            animation-duration: 28s;
+        }
+
+        @keyframes orbit {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 1.8rem; }
+            .timer-display { font-size: 4.5rem; }
+            .timer-controls { flex-wrap: wrap; }
+            .timer-modes { flex-wrap: wrap; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <button class="mode-toggle" id="modeToggle">
+        <span id="modeIcon">🌙</span>
+    </button>
+
+    <div class="container">
+        <h1>Pomodoro Timer</h1>
+
+        <div class="timer-modes">
+            <div class="timer-mode active" data-mode="pomodoro">
+                Pomodoro
+                <input type="number" id="pomodoroTime" min="1" max="60" value="25">
+            </div>
+            <div class="timer-mode" data-mode="shortBreak">
+                Short Break
+                <input type="number" id="shortBreakTime" min="1" max="30" value="5">
+            </div>
+            <div class="timer-mode" data-mode="longBreak">
+                Long Break
+                <input type="number" id="longBreakTime" min="1" max="60" value="15">
+            </div>
+        </div>
+
+        <div class="timer-display" id="timer">25:00</div>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="timer-controls">
+            <button id="startBtn">Start</button>
+            <button id="pauseBtn" class="hidden">Pause</button>
+            <button id="resetBtn" class="reset">Reset</button>
+        </div>
+
+        <div class="session-counter">
+            Completed: <span id="sessionCount">0</span> / 4 sessions
+        </div>
+    </div>
+
+    <div class="background-orbits">
+        <div class="orbit"></div>
+        <div class="orbit"></div>
+        <div class="orbit"></div>
+    </div>
+
+    <audio id="alarmSound" src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3" preload="auto"></audio>
+
+    <script>
+        // DOM Elements
+        const timerDisplay = document.getElementById('timer');
+        const progressBar = document.getElementById('progressBar');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const modeToggle = document.getElementById('modeToggle');
+        const modeIcon = document.getElementById('modeIcon');
+        const sessionCountDisplay = document.getElementById('sessionCount');
+        const alarmSound = document.getElementById('alarmSound');
+        const timerModes = document.querySelectorAll('.timer-mode');
+        
+        // Timer inputs
+        const pomodoroTimeInput = document.getElementById('pomodoroTime');
+        const shortBreakTimeInput = document.getElementById('shortBreakTime');
+        const longBreakTimeInput = document.getElementById('longBreakTime');
+
+        // Timer variables
+        let timer;
+        let timeLeft = null;
+        let totalTime;
+        let isRunning = false;
+        let currentMode = 'pomodoro';
+        let sessionCount = 0;
+        
+        // Initialize timer
+        updateTimerDisplay();
+
+        // Event listeners
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        modeToggle.addEventListener('click', toggleDarkMode);
+        
+        // Timer mode selection
+        timerModes.forEach(mode => {
+            mode.addEventListener('click', () => {
+                timerModes.forEach(m => m.classList.remove('active'));
+                mode.classList.add('active');
+                currentMode = mode.dataset.mode;
+                resetTimer();
+            });
+        });
+
+        // Timer input event listeners
+        pomodoroTimeInput.addEventListener('change', () => {
+            if (currentMode === 'pomodoro') updateTimerDisplay();
+        });
+        shortBreakTimeInput.addEventListener('change', () => {
+            if (currentMode === 'shortBreak') updateTimerDisplay();
+        });
+        longBreakTimeInput.addEventListener('change', () => {
+            if (currentMode === 'longBreak') updateTimerDisplay();
+        });
+
+        // Functions
+        function startTimer() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            startBtn.classList.add('hidden');
+            pauseBtn.classList.remove('hidden');
+            
+            // Ensure timeLeft is initialized before starting
+            if (timeLeft === null || timeLeft === undefined) {
+                updateTimerDisplay();
+            }
+            
+            timer = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    playAlarmSound();
+                    
+                    if (currentMode === 'pomodoro') {
+                        sessionCount++;
+                        sessionCountDisplay.textContent = sessionCount;
+                        alert('Pomodoro completed! Time for a break.');
+                        if (sessionCount % 4 === 0) {
+                            setTimerMode('longBreak');
+                        } else {
+                            setTimerMode('shortBreak');
+                        }
+                    } else {
+                        alert(`${currentMode === 'shortBreak' ? 'Short' : 'Long'} Break completed! Back to work.`);
+                        setTimerMode('pomodoro');
+                    }
+                    
+                    resetTimer();
+                    return;
+                }
+                
+                timeLeft--;
+                updateTimerDisplay();
+                updateProgressBar();
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            startBtn.classList.remove('hidden');
+            pauseBtn.classList.add('hidden');
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            timeLeft = null; // Reset timeLeft to null to force reinitialization
+            updateTimerDisplay();
+            updateProgressBar();
+            startBtn.classList.remove('hidden');
+            pauseBtn.classList.add('hidden');
+        }
+
+        function updateTimerDisplay() {
+            if (timeLeft === null || timeLeft === undefined) {
+                switch (currentMode) {
+                    case 'pomodoro':
+                        timeLeft = parseInt(pomodoroTimeInput.value) * 60;
+                        break;
+                    case 'shortBreak':
+                        timeLeft = parseInt(shortBreakTimeInput.value) * 60;
+                        break;
+                    case 'longBreak':
+                        timeLeft = parseInt(longBreakTimeInput.value) * 60;
+                        break;
+                }
+                totalTime = timeLeft;
+            }
+            
+            const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const seconds = (timeLeft % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${minutes}:${seconds}`;
+            document.title = `${minutes}:${seconds} - Pomodoro Timer`;
+        }
+
+        function updateProgressBar() {
+            const progressPercentage = ((totalTime - timeLeft) / totalTime) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        function setTimerMode(mode) {
+            currentMode = mode;
+            timerModes.forEach(m => {
+                if (m.dataset.mode === mode) {
+                    m.classList.add('active');
+                } else {
+                    m.classList.remove('active');
+                }
+            });
+            resetTimer();
+        }
+
+        function playAlarmSound() {
+            alarmSound.volume = 0.8;
+            alarmSound.currentTime = 0;
+            alarmSound.play().catch(error => {
+                console.error('Error playing sound:', error);
+                alert('Sound playback failed. Please ensure your browser allows audio.');
+            });
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            if (document.body.classList.contains('dark-mode')) {
+                modeIcon.textContent = '☀️';
+            } else {
+                modeIcon.textContent = '🌙';
+            }
+        }
+    </script>
+</body>
+</html>
